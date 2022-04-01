@@ -1,8 +1,45 @@
 #include "crow_all.h"
 
+
+#include "generators/Cycle.h"
+#include "generators/Complete.h"
+#include "generators/Antiprism.h"
+#include "generators/Prism.h"
+#include "generators/Star.h"
+#include "generators/Regular.h"
+#include "generators/Banana.h"
+#include "generators/GeneralizedPeterson.h"
+#include "generators/Cmn.h"
+#include "generators/Path.h"
+#include "generators/Flower.h"
+#include "generators/Wheel.h"
+#include "generators/Crown.h"
+#include "generators/Web.h"
+#include "generators/CocktailParty.h"
+#include "generators/Gear.h"
+#include "generators/Heawood.h"
+
 int main()
 {
     crow::SimpleApp app;
+    std::vector<std::unique_ptr<GeneratorInterface>> availableGenerators;
+    availableGenerators.emplace_back(std::make_unique<Antiprism>());
+    availableGenerators.emplace_back(std::make_unique<Banana>());
+    availableGenerators.emplace_back(std::make_unique<Cycle>());
+    availableGenerators.emplace_back(std::make_unique<Complete>());
+    availableGenerators.emplace_back(std::make_unique<Prism>());
+    availableGenerators.emplace_back(std::make_unique<Regular>());
+    availableGenerators.emplace_back(std::make_unique<GeneralizedPeterson>());
+    availableGenerators.emplace_back(std::make_unique<Cmn>());
+    availableGenerators.emplace_back(std::make_unique<Path>());
+    availableGenerators.emplace_back(std::make_unique<Flower>());
+    availableGenerators.emplace_back(std::make_unique<Star>());
+    availableGenerators.emplace_back(std::make_unique<Wheel>());
+    availableGenerators.emplace_back(std::make_unique<Crown>());
+    availableGenerators.emplace_back(std::make_unique<Web>());
+    availableGenerators.emplace_back(std::make_unique<CocktailParty>());
+    availableGenerators.emplace_back(std::make_unique<Gear>());
+    availableGenerators.emplace_back(std::make_unique<Heawood>());
 
     CROW_ROUTE(app, "/")([](){
         crow::mustache::context ctx;
@@ -11,10 +48,14 @@ int main()
     });
 
     CROW_ROUTE(app, "/graphs/")
-    ([]{
+    ([&availableGenerators]{
       std::vector<crow::json::wvalue> graphs;
-      crow::json::wvalue tmp({{"name", "test"}});
-      graphs.push_back(tmp);
+      for (auto& gi : availableGenerators) {
+        crow::json::wvalue tmp({{"name", gi->name().c_str()}});
+        graphs.push_back(tmp); 
+//        menuGenerate->Append(i, wxString(gi->name().c_str(), wxConvUTF8),
+//                             wxString(gi->description().c_str(), wxConvUTF8));
+      }
       crow::json::wvalue x({{"graphs", graphs}});
 //      x["graphs"] = graphs;
       crow::response response;
