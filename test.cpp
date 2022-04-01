@@ -5,7 +5,9 @@ int main()
     crow::SimpleApp app;
 
     CROW_ROUTE(app, "/")([](){
-        return "Hello world";
+        crow::mustache::context ctx;
+    	auto main_page = crow::mustache::load("../static/index.html");
+    	return main_page.render();
     });
     
     CROW_ROUTE(app, "/json")
