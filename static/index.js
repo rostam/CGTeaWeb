@@ -12,6 +12,8 @@ var report_results;
 var original_data = {};
 $.get(serverAddr + 'graphs/')
     .done(function (data) {
+    console.log(data);
+        console.log(data.graphs);
         original_data = data;
         var categoriesSelect = $('#categories');
         data.graphs.forEach(function (d) {
