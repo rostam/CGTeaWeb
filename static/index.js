@@ -348,6 +348,7 @@ function load_generator(isDraw,webgl,ended) {
                     $('#parent_canvas').append("<div id='canvas' class='main'>")
                     initCytoscape(undirected, serverAddr, uuid);
                     nodeId = 0; //resets counter for freehand vertices
+                    console.log(data);
                     var nodes = data.nodes;
                     var edges = data.edges;
                     cy.elements().remove();

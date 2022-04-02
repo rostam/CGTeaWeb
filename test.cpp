@@ -69,15 +69,24 @@ int main()
     });
 
     CROW_ROUTE(app, "/graphs/")
-    ([&availableGenerators]{
+    ([&]{
       std::vector<crow::json::wvalue> graphs;
       for (auto& gi : availableGenerators) {
         crow::json::wvalue tmp({{"name", gi->name().c_str()}});
+        tmp["description"] =  gi->description().c_str();
         graphs.push_back(tmp); 
-//        menuGenerate->Append(i, wxString(gi->name().c_str(), wxConvUTF8),
-//                             wxString(gi->description().c_str(), wxConvUTF8));
       }
-      crow::json::wvalue x({{"graphs", graphs}});
+      
+      
+      std::vector<crow::json::wvalue> reports;
+      for (auto& gi : availableReports) {
+        crow::json::wvalue tmp({{"name", gi->name().c_str()}});
+        tmp["description"] =  gi->description().c_str();
+        tmp["properties"] = "";
+        reports.push_back(tmp); 
+      }
+      crow::json::wvalue x({{"graphs", graphs},{"reports",reports}});
+//      x["reports"] = reports;
 //      x["graphs"] = graphs;
       crow::response response;
       response.add_header("Access-Control-Allow-Origin", "*");
@@ -90,29 +99,6 @@ int main()
   //    return x;
     });
     
-    
-    CROW_ROUTE(app, "/reports/")
-    ([&availableGenerators]{
-      std::vector<crow::json::wvalue> graphs;
-      for (auto& gi : availableGenerators) {
-        crow::json::wvalue tmp({{"name", gi->name().c_str()}});
-        graphs.push_back(tmp); 
-//        menuGenerate->Append(i, wxString(gi->name().c_str(), wxConvUTF8),
-//                             wxString(gi->description().c_str(), wxConvUTF8));
-      }
-      crow::json::wvalue x({{"graphs", graphs}});
-//      x["graphs"] = graphs;
-      crow::response response;
-      response.add_header("Access-Control-Allow-Origin", "*");
-      response.add_header("Access-Control-Allow-Headers", "Content-Type");
-      response.add_header("Content-Type", "application/json");
-      // write your data with this
-      response.write(x.dump());
-
-      return response;
-  //    return x;
-    });
-
     
     CROW_ROUTE(app, "/json")
     ([]{
@@ -125,6 +111,46 @@ int main()
     ([](int count){
       return crow::response(std::to_string(count));
     });
+    
+    CROW_ROUTE(app, "/add")
+    .methods("POST"_method)
+    ([&](const crow::request& req){
+    auto x = crow::json::load(req.body);
+    if (!x)
+        return crow::response(crow::status::BAD_REQUEST); // same as crow::response(400)
+    //int sum = x["a"].i()+x["b"].i();
+    
+    //std::vector<crow::json::wvalue> vs;
+    std::vector<crow::json::wvalue> graph;
+    for (auto& gi : availableGenerators) {
+        if(gi->name().c_str() == x["name"]) {
+          std::cerr << "here" << std::endl;
+          std::vector<crow::json::wvalue> vs;
+          auto g = gi->generate(5,3);
+          for_each_v_const(g, [&](Ver v){
+            crow::json::wvalue data({{"id",std::to_string(v)}});
+            vs.push_back({{"data",data}});
+          });
+          std::vector<crow::json::wvalue> es;
+          for_each_e_const(g, [&](Edge e){
+            crow::json::wvalue data({{"source", std::to_string(boost::source(e,g))}, {"target",std::to_string(boost::target(e,g))}});
+            es.push_back({{"data",data}});
+          });
+          crow::json::wvalue x({{"nodes",vs},{"edges",es}});
+          crow::response response;
+          response.add_header("Access-Control-Allow-Origin", "*");
+          response.add_header("Access-Control-Allow-Headers", "Content-Type");
+          response.add_header("Content-Type", "application/json");
+          // write your data with this
+          response.write(x.dump());
+
+          return response;
+        }
+    }
+    std::ostringstream os;
+    os << "not found";
+    return crow::response{os.str()};
+});
 
     app.port(2342).multithreaded().run();
 }
